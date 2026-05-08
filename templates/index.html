@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0c0f">
+<title>FC Push Tracker</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER -->
+  <header>
+    <div class="logo">FC <span>PUSH</span></div>
+    <div class="live-dot">LIVE</div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" data-tab="manual">✏️ Manual</button>
+    <button class="tab" data-tab="scan">📷 Scan</button>
+    <button class="tab" data-tab="queue">📦 Queue <span id="queueCount"></span></button>
+  </div>
+
+  <!-- MANUAL TAB -->
+  <div class="panel active" id="panel-manual">
+    <div class="card card-gold">
+      <div class="card-label">🎙️ &nbsp;Walkie-Talkie Entry</div>
+      <div class="row-inputs">
+        <div class="field">
+          <label>Station #</label>
+          <input type="number" id="stationInput" inputmode="numeric" placeholder="42" autocomplete="off" maxlength="2">
+          <div class="hint">Last 2 digits</div>
+        </div>
+        <div class="field field-wide">
+          <label>Tote(s)</label>
+          <input type="text" id="toteInput" placeholder="AB3, XY7..." autocomplete="off">
+          <div class="hint">Comma or space separated</div>
+        </div>
+      </div>
+      <div id="totePreview" class="tote-preview"></div>
+      <div id="repushWarn" class="warn-box hidden"></div>
+      <button id="addBtn" class="btn-primary">+ ADD PUSH</button>
+    </div>
+  </div>
+
+  <!-- SCAN TAB -->
+  <div class="panel" id="panel-scan">
+    <div class="card card-purple">
+      <div class="card-label">🤖 &nbsp;AI Photo Scan — CPT Priorizer</div>
+      <div class="upload-row">
+        <label class="upload-btn">
+          <input type="file" accept="image/*" capture="environment" id="cameraInput">
+          <div class="upload-icon">📷</div>
+          <div class="upload-label">Camera</div>
+          <div class="upload-sub">Take photo now</div>
+        </label>
+        <label class="upload-btn">
+          <input type="file" accept="image/*" id="galleryInput">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-label">Gallery</div>
+          <div class="upload-sub">Choose from files</div>
+        </label>
+      </div>
+      <img id="imgPreview" class="img-preview hidden" alt="Preview">
+      <div id="scanStatus" class="scan-status hidden"></div>
+      <div id="extractedList"></div>
+    </div>
+  </div>
+
+  <!-- QUEUE TAB -->
+  <div class="panel" id="panel-queue">
+    <div class="queue-filters">
+      <button class="filter-btn active" data-filter="active">Active <span id="activeCount" class="filter-count"></span></button>
+      <button class="filter-btn" data-filter="closed">Closed <span id="closedCount" class="filter-count"></span></button>
+      <button id="clearClosedBtn" class="btn-danger hidden">Clear All</button>
+    </div>
+    <div id="queueList"></div>
+  </div>
+</div>
+
+<!-- TOTE CONTEXT MENU -->
+<div id="toteMenu" class="tote-menu hidden">
+  <div id="toteMenuName" class="menu-tote-name"></div>
+  <button class="menu-item" data-status="pending">⏳ Pending</button>
+  <button class="menu-item" data-status="pushed">✓ Pushed</button>
+  <button class="menu-item" data-status="pulled">⬆ Pull Out</button>
+  <button class="menu-item" data-status="skipped">✕ Skip</button>
+</div>
+<div id="menuOverlay" class="menu-overlay hidden"></div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
