@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#07090e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CPT Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #07090e;
+    --surface:   #0e1420;
+    --surface2:  #131d2e;
+    --border:    #1c2940;
+    --safe:      #10b981;
+    --warn:      #f59e0b;
+    --critical:  #ef4444;
+    --accent:    #3b82f6;
+    --dim:       #4e6080;
+    --muted:     #7a90aa;
+    --text:      #d8e4f0;
+    --white:     #f0f6ff;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* subtle grid overlay */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.025) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    max-width: 430px; margin: 0 auto;
+    padding-bottom: 40px;
+  }
+
+  /* ─── HEADER ─── */
+  .hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 18px 0;
+  }
+  .hdr-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; letter-spacing: 4px; color: var(--white);
+  }
+  .hdr-shift {
+    font-size: 10px; letter-spacing: 2px; color: var(--dim);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 4px;
+  }
+
+  /* ─── CLOCK ─── */
+  .clock-wrap {
+    text-align: center; padding: 16px 18px 10px;
+  }
+  .clock {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 68px; letter-spacing: 5px; line-height: 1;
+    color: var(--white);
+    text-shadow: 0 0 50px rgba(59,130,246,0.25);
+  }
+  .clock-date {
+    font-size: 10px; letter-spacing: 3px; color: var(--dim);
+    margin-top: 4px; text-transform: uppercase;
+  }
+
+  /* ─── HERO CARD ─── */
+  .hero {
+    margin: 10px 14px 10px;
+    border-radius: 18px; padding: 20px 20px 18px;
+    border: 1.5px solid transparent;
+    position: relative; overflow: hidden;
+    transition: background 0.6s ease, border-color 0.6s ease;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at top right, var(--glow-color, transparent) 0%, transparent 65%);
+    pointer-events: none; transition: all 0.6s;
+  }
+
+  .hero.safe   { background: #091810; border-color: rgba(16,185,129,0.25); --glow-color: rgba(16,185,129,0.12); }
+  .hero.warn   { background: #16100a; border-color: rgba(245,158,11,0.35);  --glow-color: rgba(245,158,11,0.15); }
+  .hero.critical { background: #160808; border-color: rgba(239,68,68,0.4); --glow-color: rgba(239,68,68,0.2); }
+  .hero.done   { background: var(--surface); border-color: var(--border); }
+
+  .hero-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .hero-label {
+    font-size: 9px; letter-spacing: 3px; color: var(--dim);
+    text-transform: uppercase; margin-bottom: 3px;
+  }
+  .hero-cpt-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; letter-spacing: 3px;
+    transition: color 0.4s;
+  }
+  .hero.safe    .hero-cpt-time { color: var(--safe); }
+  .hero.warn    .hero-cpt-time { color: var(--warn); }
+  .hero.critical .hero-cpt-time { color: var(--critical); }
+  .hero.done    .hero-cpt-time { color: var(--dim); }
+
+  .hero-status-pill {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    padding: 6px 12px; border-radius: 20px; text-transform: uppercase;
+    transition: all 0.4s;
+  }
+  .hero.safe    .hero-status-pill { background: rgba(16,185,129,0.15); color: var(--safe); }
+  .hero.warn    .hero-status-pill { background: rgba(245,158,11,0.2);  color: var(--warn); animation: pill-pulse-warn 1.4s infinite; }
+  .hero.critical .hero-status-pill { background: rgba(239,68,68,0.2); color: var(--critical); animation: pill-pulse-red 0.7s infinite; }
+  .hero.done    .hero-status-pill { background: rgba(78,96,128,0.15); color: var(--dim); }
+
+  @keyframes pill-pulse-warn {
+    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
+    50%      { box-shadow: 0 0 0 5px rgba(245,158,11,0.15); }
+  }
+  @keyframes pill-pulse-red {
+    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); background: rgba(239,68,68,0.2); }
+    50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0.12); background: rgba(239,68,68,0.35); }
+  }
+
+  .hero-countdown {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px; letter-spacing: 4px; line-height: 1;
+    margin: 4px 0 6px;
+    transition: color 0.4s, text-shadow 0.4s;
+  }
+  .hero.safe     .hero-countdown { color: var(--safe); text-shadow: 0 0 40px rgba(16,185,129,0.3); }
+  .hero.warn     .hero-countdown { color: var(--warn); text-shadow: 0 0 40px rgba(245,158,11,0.3); }
+  .hero.critical .hero-countdown { color: var(--critical); text-shadow: 0 0 50px rgba(239,68,68,0.5); animation: cd-glow 0.7s infinite; }
+  .hero.done     .hero-countdown { color: var(--dim); text-shadow: none; }
+
+  @keyframes cd-glow {
+    0%,100% { text-shadow: 0 0 30px rgba(239,68,68,0.4); }
+    50%      { text-shadow: 0 0 70px rgba(239,68,68,0.85); }
+  }
+
+  .hero-until { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+
+  /* progress bar */
+  .hero-progress-wrap {
+    margin-top: 14px;
+    height: 4px; background: rgba(255,255,255,0.06);
+    border-radius: 2px; overflow: hidden;
+  }
+  .hero-progress-bar {
+    height: 100%; border-radius: 2px;
+    transition: width 1s linear, background 0.5s;
+  }
+  .hero.safe     .hero-progress-bar { background: var(--safe); }
+  .hero.warn     .hero-progress-bar { background: var(--warn); }
+  .hero.critical .hero-progress-bar { background: var(--critical); }
+  .hero.done     .hero-progress-bar { background: var(--dim); }
+
+  /* ─── PHASE TIMELINE ─── */
+  .phases {
+    margin: 0 14px 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 16px;
+  }
+  .phases-head {
+    font-size: 8px; letter-spacing: 3px; color: var(--dim);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .ph-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid rgba(28,41,64,0.6);
+    transition: opacity 0.3s;
+  }
+  .ph-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .ph-row.active-phase { opacity: 1 !important; }
+  .ph-row.past-phase   { opacity: 0.35; }
+
+  .ph-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .ph-row.active-phase .ph-dot { animation: dot-pulse 1s infinite; }
+
+  @keyframes dot-pulse {
+    0%,100% { transform: scale(1); box-shadow: 0 0 0 0 currentColor; }
+    50%      { transform: scale(1.3); }
+  }
+
+  .ph-time {
+    font-size: 17px; font-weight: 700; min-width: 54px;
+    color: var(--white);
+  }
+  .ph-desc { flex: 1; font-size: 11px; color: var(--muted); }
+  .ph-tag {
+    font-size: 8px; font-weight: 700; letter-spacing: 1.5px;
+    padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+  }
+
+  /* ─── NOTIFY BUTTON ─── */
+  .notify-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 0 14px 12px; padding: 13px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    cursor: pointer; width: calc(100% - 28px);
+    transition: all 0.2s;
+  }
+  .notify-btn:active { transform: scale(0.97); }
+  .notify-btn.on { border-color: rgba(16,185,129,0.3); color: var(--safe); background: rgba(16,185,129,0.05); }
+
+  /* ─── CPT LIST ─── */
+  .section-head {
+    padding: 4px 18px 8px;
+    font-size: 8px; letter-spacing: 3px; color: var(--dim); text-transform: uppercase;
+  }
+  .cpt-list { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
+
+  .cpt-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    transition: all 0.35s; position: relative; overflow: hidden;
+  }
+  .cpt-card.state-safe     { }
+  .cpt-card.state-warn     { border-color: rgba(245,158,11,0.4); background: #13100a; }
+  .cpt-card.state-critical { border-color: rgba(239,68,68,0.45); background: #130808; }
+  .cpt-card.state-past     { opacity: 0.32; }
+  .cpt-card.state-next     { border-color: rgba(59,130,246,0.3); }
+
+  .cpt-indicator { width: 3px; align-self: stretch; border-radius: 2px; flex-shrink: 0; min-height: 36px; }
+
+  .cpt-main { flex: 1; min-width: 0; }
+  .cpt-time {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 2px; line-height: 1;
+    transition: color 0.3s;
+  }
+  .cpt-sub { font-size: 9px; color: var(--dim); margin-top: 2px; letter-spacing: 0.5px; }
+
+  .cpt-right { text-align: right; flex-shrink: 0; }
+  .cpt-badge {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px; letter-spacing: 1.5px;
+    padding: 5px 11px; border-radius: 7px;
+    display: inline-block;
+  }
+  .cpt-eta {
+    font-size: 10px; color: var(--dim);
+    margin-top: 3px; text-align: right;
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; top: 14px; left: 12px; right: 12px; z-index: 9999;
+    background: #111d30; border: 1px solid rgba(245,158,11,0.45);
+    border-radius: 14px; padding: 14px 16px;
+    animation: toast-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .toast.critical-toast { border-color: rgba(239,68,68,0.6); }
+  .toast-title { font-size: 10px; letter-spacing: 2px; color: var(--warn); text-transform: uppercase; margin-bottom: 4px; font-weight: 700; }
+  .toast.critical-toast .toast-title { color: var(--critical); }
+  .toast-body { font-size: 13px; color: var(--text); }
+
+  @keyframes toast-in {
+    from { transform: translateY(-24px) scale(0.96); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  /* ─── DIVIDER ─── */
+  .sep { margin: 10px 18px 10px; height: 1px; background: var(--border); }
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="hdr">
+    <div class="hdr-title">CPT TRACKER</div>
+    <div class="hdr-shift" id="shift-label">AMAZON FC</div>
+  </div>
+
+  <!-- Clock -->
+  <div class="clock-wrap">
+    <div class="clock" id="clock">00:00:00</div>
+    <div class="clock-date" id="clock-date">···</div>
+  </div>
+
+  <!-- Hero Next CPT -->
+  <div class="hero safe" id="hero">
+    <div class="hero-top">
+      <div>
+        <div class="hero-label">NEXT CPT</div>
+        <div class="hero-cpt-time" id="hero-cpt-time">--:--</div>
+      </div>
+      <div class="hero-status-pill" id="hero-status">LOADING</div>
+    </div>
+    <div class="hero-countdown" id="hero-cd">--:--</div>
+    <div class="hero-until" id="hero-until">until CPT</div>
+    <div class="hero-progress-wrap">
+      <div class="hero-progress-bar" id="hero-prog" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Phase Schedule -->
+  <div class="phases">
+    <div class="phases-head">⏱ Schedule for next CPT</div>
+
+    <div class="ph-row" id="ph-push">
+      <div class="ph-dot" style="background:var(--warn)" id="ph-push-dot"></div>
+      <div class="ph-time" id="ph-push-t">--:--</div>
+      <div class="ph-desc">Start pushing totes</div>
+      <div class="ph-tag" style="background:rgba(245,158,11,0.15);color:var(--warn)">PUSH</div>
+    </div>
+
+    <div class="ph-row" id="ph-out">
+      <div class="ph-dot" style="background:var(--critical)"></div>
+      <div class="ph-time" id="ph-out-t">--:--</div>
+      <div class="ph-desc">Finish pushing — take out!</div>
+      <div class="ph-tag" style="background:rgba(239,68,68,0.15);color:var(--critical)">OUT</div>
+    </div>
+
+    <div class="ph-row" id="ph-cpt">
+      <div class="ph-dot" style="background:var(--accent)"></div>
+      <div class="ph-time" id="ph-cpt-t">--:--</div>
+      <div class="ph-desc">CPT departs</div>
+      <div class="ph-tag" style="background:rgba(59,130,246,0.15);color:var(--accent)">CPT</div>
+    </div>
+  </div>
+
+  <!-- Notification Button -->
+  <button class="notify-btn" id="notify-btn" onclick="askNotify()">
+    🔔 Enable Notifications
+  </button>
+
+  <div class="sep"></div>
+  <div class="section-head">All CPTs — Shift Schedule</div>
+
+  <!-- CPT Cards -->
+  <div class="cpt-list" id="cpt-list"></div>
+
+</div>
+
+<script>
+// ─── CPT DATA ────────────────────────────────────────────────
+const RAW = [
+  "20:15","20:30","21:00","22:00","22:30","23:00",
+  "1:45","2:15","2:45","3:15","3:45","4:15","4:30"
+];
+
+// Convert "H:MM" → minutes since midnight
+function toMin(str) {
+  const [h, m] = str.split(':').map(Number);
+  return h * 60 + m;
+}
+
+// Format minutes → "HH:MM" (handles values > 1440)
+function fmtTime(min) {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+// Format countdown (total seconds) → "H:MM:SS" or "MM:SS"
+function fmtCd(totalSec) {
+  if (totalSec < 0) totalSec = 0;
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// Build CPT objects
+// Times < noon (720 min) = after midnight (next calendar day) → add 1440 for ordering
+const CPTS = RAW.map(raw => {
+  const min = toMin(raw);
+  const isNextDay = min < 720;
+  const eff = isNextDay ? min + 1440 : min; // "effective" minutes for sorting/comparing
+  return {
+    label: fmtTime(min),
+    min,
+    isNextDay,
+    eff,
+    pushStart: eff - 70,  // start pushing 70 min before CPT
+    pushEnd:   eff - 60,  // finish & take out 60 min before CPT
+  };
+}).sort((a, b) => a.eff - b.eff);
+
+// ─── STATE ───────────────────────────────────────────────────
+let notifyOn = false;
+const notified = new Set();
+
+// ─── HELPERS ─────────────────────────────────────────────────
+function nowEff() {
+  const d = new Date();
+  const h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  const minNow = h * 60 + m;
+  // If before noon treat as "next day" in our effective scale
+  const eff = minNow < 720 ? minNow + 1440 : minNow;
+  return { eff, sec: s, minNow, h, m, s };
+}
+
+function getPhase(cpt, effNow) {
+  const diff = cpt.eff - effNow;
+  if (diff < 0)   return 'past';
+  if (diff <= 60) return 'critical';   // take out window
+  if (diff <= 70) return 'warn';       // start pushing
+  return 'safe';
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────
+function askNotify() {
+  if (!('Notification' in window)) { alert('Notifications not supported on this browser.'); return; }
+  Notification.requestPermission().then(p => {
+    notifyOn = p === 'granted';
+    renderNotifyBtn();
+  });
+}
+
+function renderNotifyBtn() {
+  const btn = document.getElementById('notify-btn');
+  if (notifyOn) {
+    btn.textContent = '✅ Notifications Enabled';
+    btn.classList.add('on');
+  } else {
+    btn.textContent = '🔔 Enable Notifications';
+    btn.classList.remove('on');
+  }
+}
+
+function fire(title, body, isCritical) {
+  showToast(title, body, isCritical);
+  if (notifyOn) {
+    try { new Notification(title, { body, silent: false }); } catch(e) {}
+  }
+  // Vibrate on mobile
+  if ('vibrate' in navigator) {
+    navigator.vibrate(isCritical ? [400,100,400,100,800] : [300,100,300]);
+  }
+}
+
+let toastTimer;
+function showToast(title, body, isCritical) {
+  const old = document.getElementById('toast');
+  if (old) old.remove();
+  clearTimeout(toastTimer);
+  const t = document.createElement('div');
+  t.id = 'toast';
+  t.className = 'toast' + (isCritical ? ' critical-toast' : '');
+  t.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
+  document.body.appendChild(t);
+  toastTimer = setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.5s'; setTimeout(()=>t.remove(),500); }, 6000);
+}
+
+// ─── BUILD CARD SKELETONS ─────────────────────────────────────
+function buildList() {
+  const list = document.getElementById('cpt-list');
+  CPTS.forEach(cpt => {
+    const card = document.createElement('div');
+    card.className = 'cpt-card';
+    card.id = `card-${cpt.eff}`;
+    list.appendChild(card);
+  });
+}
+
+// ─── MAIN TICK ───────────────────────────────────────────────
+function tick() {
+  const { eff: effNow, sec, h, m, s } = nowEff();
+
+  // ── Clock
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('clock-date').textContent =
+    `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+
+  // ── Find next CPT
+  let nextCpt = null, minDiff = Infinity;
+  for (const cpt of CPTS) {
+    const diff = cpt.eff - effNow;
+    if (diff > 0 && diff < minDiff) { minDiff = diff; nextCpt = cpt; }
+  }
+  // All past → show first CPT (next shift)
+  if (!nextCpt) { nextCpt = CPTS[0]; minDiff = nextCpt.eff + 1440 - effNow; }
+
+  // ── Hero
+  const phase = getPhase(nextCpt, effNow);
+  const hero = document.getElementById('hero');
+  hero.className = `hero ${phase === 'past' ? 'done' : phase}`;
+
+  document.getElementById('hero-cpt-time').textContent = `CPT ${nextCpt.label}`;
+
+  const totalSec = minDiff * 60 - sec;
+  document.getElementById('hero-cd').textContent = fmtCd(totalSec);
+
+  const statusTxt = {
+    safe:     '✅ You\'re good',
+    warn:     '⚠️ PUSH NOW!',
+    critical: '🚨 TAKE IT OUT!',
+    past:     '✓ Done',
+  };
+  document.getElementById('hero-status').textContent = statusTxt[phase] || '';
+
+  const untilTxt = {
+    safe:     `push by ${fmtTime(nextCpt.pushStart % 1440)}`,
+    warn:     `hard out by ${fmtTime(nextCpt.pushEnd % 1440)}`,
+    critical: `CPT at ${nextCpt.label} — GET IT OUT`,
+    past:     `CPT ${nextCpt.label}`,
+  };
+  document.getElementById('hero-until').textContent = untilTxt[phase] || 'until CPT';
+
+  // Progress bar: fraction of time elapsed from last phase boundary to next
+  let progPct = 0;
+  if (phase === 'safe') {
+    // progress from "previous CPT or far back" — show % of window until push starts
+    const windowMin = 120; // show last 2 hrs as the "safe" window
+    const elapsed = windowMin - Math.max(0, minDiff - 70);
+    progPct = Math.min(100, Math.max(0, (elapsed / windowMin) * 100));
+  } else if (phase === 'warn') {
+    progPct = ((70 - minDiff) / 10) * 100; // 10-min window
+  } else if (phase === 'critical') {
+    progPct = ((60 - minDiff) / 60) * 100;
+  } else {
+    progPct = 100;
+  }
+  document.getElementById('hero-prog').style.width = progPct.toFixed(1) + '%';
+
+  // ── Phase rows
+  document.getElementById('ph-push-t').textContent = fmtTime(nextCpt.pushStart % 1440);
+  document.getElementById('ph-out-t').textContent  = fmtTime(nextCpt.pushEnd   % 1440);
+  document.getElementById('ph-cpt-t').textContent  = nextCpt.label;
+
+  const phPush = document.getElementById('ph-push');
+  const phOut  = document.getElementById('ph-out');
+  const phCpt  = document.getElementById('ph-cpt');
+  phPush.className = 'ph-row ' + (phase === 'warn'     ? 'active-phase' : (phase === 'safe' ? '' : 'past-phase'));
+  phOut.className  = 'ph-row ' + (phase === 'critical'  ? 'active-phase' : (['warn','safe'].includes(phase) ? '' : 'past-phase'));
+  phCpt.className  = 'ph-row';
+
+  // ── Notifications
+  const k70 = `w-${nextCpt.eff}`, k60 = `c-${nextCpt.eff}`, k10 = `t-${nextCpt.eff}`;
+  if (minDiff <= 70 && minDiff > 60 && !notified.has(k70)) {
+    notified.add(k70);
+    fire('⚠️ START PUSHING', `CPT ${nextCpt.label} — finish by ${fmtTime(nextCpt.pushEnd % 1440)}`, false);
+  }
+  if (minDiff <= 60 && minDiff > 0 && !notified.has(k60)) {
+    notified.add(k60);
+    fire('🚨 TAKE IT OUT NOW!', `All totes out before CPT ${nextCpt.label}`, true);
+  }
+  if (minDiff <= 10 && minDiff > 0 && !notified.has(k10)) {
+    notified.add(k10);
+    fire('⏰ CPT IN 10 MIN', `CPT ${nextCpt.label} departing soon!`, false);
+  }
+
+  // ── CPT Cards
+  CPTS.forEach(cpt => {
+    const card = document.getElementById(`card-${cpt.eff}`);
+    if (!card) return;
+    const p = getPhase(cpt, effNow);
+    const isNext = cpt === nextCpt;
+    const diff = cpt.eff - effNow;
+
+    // State class
+    let stateClass = 'state-safe';
+    if (p === 'past')     stateClass = 'state-past';
+    else if (p === 'warn')     stateClass = 'state-warn';
+    else if (p === 'critical') stateClass = 'state-critical';
+    else if (isNext)      stateClass = 'state-next';
+    card.className = `cpt-card ${stateClass}`;
+
+    const color = {safe:'var(--safe)', warn:'var(--warn)', critical:'var(--critical)', past:'var(--dim)'}[p];
+
+    // Badge
+    let badge = '';
+    if (p === 'past') {
+      badge = `<div class="cpt-badge" style="background:rgba(78,96,128,0.1);color:var(--dim)">DONE</div>`;
+    } else if (p === 'critical') {
+      badge = `<div class="cpt-badge" style="background:rgba(239,68,68,0.2);color:var(--critical);animation:pill-pulse-red 0.7s infinite">TAKE OUT</div>`;
+    } else if (p === 'warn') {
+      badge = `<div class="cpt-badge" style="background:rgba(245,158,11,0.2);color:var(--warn)">PUSH NOW</div>`;
+    } else if (isNext) {
+      badge = `<div class="cpt-badge" style="background:rgba(59,130,246,0.15);color:var(--accent)">NEXT</div>`;
+    } else {
+      const dh = Math.floor(diff/60), dm = diff % 60;
+      badge = `<div class="cpt-badge" style="background:rgba(16,185,129,0.08);color:var(--safe);font-size:12px">${dh}h ${String(dm).padStart(2,'0')}m</div>`;
+    }
+
+    const eta = p !== 'past'
+      ? `<div class="cpt-eta">push ${fmtTime(cpt.pushStart % 1440)} · out ${fmtTime(cpt.pushEnd % 1440)}</div>`
+      : '';
+
+    card.innerHTML = `
+      <div class="cpt-indicator" style="background:${color}"></div>
+      <div class="cpt-main">
+        <div class="cpt-time" style="color:${color}">${cpt.label}</div>
+        <div class="cpt-sub">push by ${fmtTime(cpt.pushEnd % 1440)}</div>
+      </div>
+      <div class="cpt-right">
+        ${badge}
+        ${eta}
+      </div>
+    `;
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────
+buildList();
+tick();
+setInterval(tick, 1000);
+
+// Auto-enable if permission already granted
+if ('Notification' in window && Notification.permission === 'granted') {
+  notifyOn = true;
+  renderNotifyBtn();
+}
+</script>
+</body>
+</html>
