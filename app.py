@@ -29,6 +29,9 @@ GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5
 @app.route("/")
 def index():
     return render_template("index.html")
+@app.route("/timings")
+def index():
+    return render_template("cpt-tracker.html")
 
 @app.route("/api/scan", methods=["POST"])
 def scan_image():
