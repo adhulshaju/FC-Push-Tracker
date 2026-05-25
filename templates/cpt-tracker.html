@@ -2,638 +2,590 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#07090e">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07090e">
 <title>CPT Tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:        #07090e;
-    --surface:   #0e1420;
-    --surface2:  #131d2e;
-    --border:    #1c2940;
-    --safe:      #10b981;
-    --warn:      #f59e0b;
-    --critical:  #ef4444;
-    --accent:    #3b82f6;
-    --dim:       #4e6080;
-    --muted:     #7a90aa;
-    --text:      #d8e4f0;
-    --white:     #f0f6ff;
-  }
+:root {
+  --bg:#07090e; --s1:#0c1119; --s2:#10161f;
+  --border:#182030; --muted:#3d5470; --text:#b8cce0; --white:#eef5ff;
+  --safe:#22c55e; --warn:#f59e0b; --crit:#ef4444; --blue:#60a5fa; --done:#2a3d52;
+  --safe-bg:rgba(34,197,94,.07); --warn-bg:rgba(245,158,11,.09); --crit-bg:rgba(239,68,68,.09);
+  --safe-bd:rgba(34,197,94,.28); --warn-bd:rgba(245,158,11,.35); --crit-bd:rgba(239,68,68,.38);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  min-height:100vh;overscroll-behavior:none;-webkit-overflow-scrolling:touch;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(rgba(96,165,250,.016) 1px,transparent 1px),
+             linear-gradient(90deg,rgba(96,165,250,.016) 1px,transparent 1px);
+  background-size:38px 38px;
+}
+.app{position:relative;z-index:1;max-width:440px;margin:0 auto;padding-bottom:60px}
 
-  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+/* ── HEADER */
+.hdr{display:flex;justify-content:space-between;align-items:center;padding:16px 16px 0}
+.logo{font-family:'Bebas Neue';font-size:20px;letter-spacing:5px;color:var(--white)}
+.logo b{color:var(--warn)}
+.shift-pill{font-size:8px;letter-spacing:2px;color:var(--muted);background:var(--s2);border:1px solid var(--border);padding:4px 10px;border-radius:4px;text-transform:uppercase}
 
-  html { scroll-behavior: smooth; }
+/* ── CLOCK */
+.clock-wrap{text-align:center;padding:12px 16px 6px}
+.clock{font-family:'Bebas Neue';font-size:66px;letter-spacing:4px;line-height:1;color:var(--white)}
+.clock-date{font-size:8px;letter-spacing:3px;color:var(--muted);margin-top:2px;text-transform:uppercase}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
-    min-height: 100vh;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-  }
+/* ── NOTIFY BTN */
+.notify-btn{display:flex;align-items:center;justify-content:center;gap:7px;margin:8px 14px;padding:11px;background:var(--s1);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;width:calc(100% - 28px);transition:all .2s}
+.notify-btn:active{transform:scale(.98)}
+.notify-btn.on{border-color:var(--safe-bd);color:var(--safe);background:var(--safe-bg)}
 
-  /* subtle grid overlay */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background-image:
-      linear-gradient(rgba(59,130,246,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59,130,246,0.025) 1px, transparent 1px);
-    background-size: 36px 36px;
-  }
+/* ── SECTION HEADER */
+.sec-hdr{display:flex;align-items:center;gap:8px;padding:14px 16px 6px;font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+.sec-hdr::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  .app {
-    position: relative; z-index: 1;
-    max-width: 430px; margin: 0 auto;
-    padding-bottom: 40px;
-  }
+/* ── ACTIVE GRID */
+.active-grid{padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.dual-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
-  /* ─── HEADER ─── */
-  .hdr {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 18px 18px 0;
-  }
-  .hdr-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 24px; letter-spacing: 4px; color: var(--white);
-  }
-  .hdr-shift {
-    font-size: 10px; letter-spacing: 2px; color: var(--dim);
-    background: var(--surface2); border: 1px solid var(--border);
-    padding: 4px 10px; border-radius: 4px;
-  }
+/* ── ACTIVE CARD */
+.act-card{border-radius:16px;padding:16px;border:1.5px solid transparent;position:relative;overflow:hidden;transition:border-color .4s,background .4s}
+.act-card.warn-card{background:var(--warn-bg);border-color:var(--warn-bd)}
+.act-card.crit-card{background:var(--crit-bg);border-color:var(--crit-bd)}
+.single-card{padding:20px}
+.single-card .big-cd{font-family:'Bebas Neue';font-size:68px;letter-spacing:3px;line-height:1;margin:6px 0 4px}
+.single-card.warn-card .big-cd{color:var(--warn)}
+.single-card.crit-card .big-cd{color:var(--crit);animation:glow-crit .7s infinite}
+@keyframes glow-crit{0%,100%{opacity:1}50%{opacity:.7}}
+.dual-card{padding:14px}
+.dual-card .big-cd{font-family:'Bebas Neue';font-size:38px;letter-spacing:2px;line-height:1;margin:4px 0 3px}
+.dual-card.warn-card .big-cd{color:var(--warn)}
+.dual-card.crit-card .big-cd{color:var(--crit);animation:glow-crit .7s infinite}
+.phase-tag{display:inline-flex;align-items:center;gap:4px;font-size:8px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:4px 9px;border-radius:20px;margin-bottom:10px}
+.warn-card .phase-tag{background:rgba(245,158,11,.2);color:var(--warn)}
+.crit-card .phase-tag{background:rgba(239,68,68,.22);color:var(--crit);animation:tag-blink .8s infinite}
+@keyframes tag-blink{0%,100%{opacity:1}50%{opacity:.5}}
+.act-lbl{font-size:8px;letter-spacing:1.5px;color:var(--muted);margin-bottom:1px}
+.act-cpt-t{font-family:'Bebas Neue';font-size:28px;letter-spacing:2px;line-height:1;margin-bottom:2px}
+.warn-card .act-cpt-t{color:var(--warn)}
+.crit-card .act-cpt-t{color:var(--crit)}
+.cd-sub{font-size:9px;color:var(--muted);margin-bottom:10px}
+.prog-wrap{height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden;margin-bottom:12px}
+.prog-bar{height:100%;border-radius:2px;transition:width 1s linear}
+.warn-card .prog-bar{background:var(--warn)}
+.crit-card .prog-bar{background:var(--crit)}
+.mini-phases{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.mini-ph{display:flex;align-items:center;gap:6px}
+.mini-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.mini-t{font-size:10px;font-weight:500;color:var(--text);min-width:36px}
+.mini-desc{font-size:9px;color:var(--muted)}
+.dual-card .mini-desc{display:none}
+.dual-card .mini-ph{gap:5px}
+.dual-card .mini-t{font-size:9px;min-width:32px}
+.dual-card .mini-phases{margin-bottom:10px}
+.done-btn{width:100%;padding:10px;border-radius:10px;background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.35);color:var(--crit);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.done-btn:active{transform:scale(.97);background:rgba(239,68,68,.28)}
 
-  /* ─── CLOCK ─── */
-  .clock-wrap {
-    text-align: center; padding: 16px 18px 10px;
-  }
-  .clock {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 68px; letter-spacing: 5px; line-height: 1;
-    color: var(--white);
-    text-shadow: 0 0 50px rgba(59,130,246,0.25);
-  }
-  .clock-date {
-    font-size: 10px; letter-spacing: 3px; color: var(--dim);
-    margin-top: 4px; text-transform: uppercase;
-  }
+/* ── NEXT CARD */
+.next-card{margin:0 12px;background:var(--s1);border:1px solid rgba(96,165,250,.28);border-radius:16px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+.nc-left .nc-lbl{font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:2px}
+.nc-left .nc-time{font-family:'Bebas Neue';font-size:44px;letter-spacing:3px;color:var(--blue);line-height:1}
+.nc-left .nc-push{font-size:9px;color:var(--muted);margin-top:5px}
+.nc-right{text-align:right}
+.nc-cd{font-family:'Bebas Neue';font-size:34px;letter-spacing:2px;color:var(--safe)}
+.nc-cd-sub{font-size:8px;color:var(--muted)}
 
-  /* ─── HERO CARD ─── */
-  .hero {
-    margin: 10px 14px 10px;
-    border-radius: 18px; padding: 20px 20px 18px;
-    border: 1.5px solid transparent;
-    position: relative; overflow: hidden;
-    transition: background 0.6s ease, border-color 0.6s ease;
-  }
-  .hero::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at top right, var(--glow-color, transparent) 0%, transparent 65%);
-    pointer-events: none; transition: all 0.6s;
-  }
+/* ── UPCOMING LIST */
+.upcoming-list{padding:0 12px;display:flex;flex-direction:column;gap:6px}
+.up-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;transition:opacity .3s,border-color .3s}
+.up-card.up-next{border-color:rgba(96,165,250,.3)}
+.up-ind{width:3px;align-self:stretch;min-height:30px;border-radius:2px;flex-shrink:0;background:var(--safe)}
+.up-main{flex:1;min-width:0}
+.up-time{font-family:'Bebas Neue';font-size:25px;letter-spacing:2px;color:var(--white);line-height:1}
+.up-sub{font-size:8px;color:var(--muted);margin-top:2px}
+.up-right{text-align:right;flex-shrink:0}
+.up-eta{font-size:13px;font-weight:500;color:var(--safe)}
+.up-eta-sub{font-size:8px;color:var(--muted);margin-top:1px}
 
-  .hero.safe   { background: #091810; border-color: rgba(16,185,129,0.25); --glow-color: rgba(16,185,129,0.12); }
-  .hero.warn   { background: #16100a; border-color: rgba(245,158,11,0.35);  --glow-color: rgba(245,158,11,0.15); }
-  .hero.critical { background: #160808; border-color: rgba(239,68,68,0.4); --glow-color: rgba(239,68,68,0.2); }
-  .hero.done   { background: var(--surface); border-color: var(--border); }
+/* ── FIRST UPCOMING CARD — featured */
+.up-card.up-featured{
+  background:var(--s2);border-color:rgba(34,197,94,.3);
+  border-radius:14px;padding:14px 16px;flex-direction:column;align-items:stretch;gap:0;
+}
+.up-featured .uf-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.up-featured .up-ind{min-height:40px}
+.up-featured .up-time{font-family:'Bebas Neue';font-size:38px;letter-spacing:3px;color:var(--white);line-height:1}
+.up-featured .up-right{text-align:right}
+.up-featured .up-eta{font-size:16px;color:var(--safe)}
+.up-featured .up-eta-sub{font-size:8px;color:var(--muted)}
+.uf-push-row{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);
+  border-radius:9px;padding:9px 12px;
+}
+.uf-push-icon{font-size:14px;flex-shrink:0}
+.uf-push-text{flex:1}
+.uf-push-label{font-size:8px;letter-spacing:2px;color:var(--warn);text-transform:uppercase;margin-bottom:2px}
+.uf-push-times{font-family:'Bebas Neue';font-size:20px;letter-spacing:2px;color:var(--warn)}
+.uf-out-label{font-size:8px;letter-spacing:2px;color:var(--crit);text-transform:uppercase;margin-bottom:1px;margin-top:4px}
+.uf-out-time{font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;color:var(--crit)}
 
-  .hero-top {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 10px;
-  }
-  .hero-label {
-    font-size: 9px; letter-spacing: 3px; color: var(--dim);
-    text-transform: uppercase; margin-bottom: 3px;
-  }
-  .hero-cpt-time {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 30px; letter-spacing: 3px;
-    transition: color 0.4s;
-  }
-  .hero.safe    .hero-cpt-time { color: var(--safe); }
-  .hero.warn    .hero-cpt-time { color: var(--warn); }
-  .hero.critical .hero-cpt-time { color: var(--critical); }
-  .hero.done    .hero-cpt-time { color: var(--dim); }
+/* ── DONE LIST */
+.done-list{padding:0 12px;display:flex;flex-direction:column;gap:5px}
+.done-row{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:9px 14px;display:flex;align-items:center;gap:10px;opacity:.28}
+.done-ind{width:3px;min-height:26px;border-radius:2px;background:var(--done);flex-shrink:0;align-self:stretch}
+.done-time{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--muted)}
+.done-badge{margin-left:auto;font-size:8px;letter-spacing:1px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:4px;text-transform:uppercase}
 
-  .hero-status-pill {
-    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-    padding: 6px 12px; border-radius: 20px; text-transform: uppercase;
-    transition: all 0.4s;
-  }
-  .hero.safe    .hero-status-pill { background: rgba(16,185,129,0.15); color: var(--safe); }
-  .hero.warn    .hero-status-pill { background: rgba(245,158,11,0.2);  color: var(--warn); animation: pill-pulse-warn 1.4s infinite; }
-  .hero.critical .hero-status-pill { background: rgba(239,68,68,0.2); color: var(--critical); animation: pill-pulse-red 0.7s infinite; }
-  .hero.done    .hero-status-pill { background: rgba(78,96,128,0.15); color: var(--dim); }
+/* ── SHIFT COMPLETE SCREEN */
+.sc-screen{
+  display:none;flex-direction:column;align-items:center;
+  padding:10px 20px 30px;text-align:center;
+}
+.sc-screen.visible{display:flex}
+.sc-check{
+  font-size:52px;margin-bottom:10px;
+  animation:sc-pop .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes sc-pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.sc-title{font-family:'Bebas Neue';font-size:36px;letter-spacing:5px;color:var(--safe);margin-bottom:4px}
+.sc-sub{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:28px}
 
-  @keyframes pill-pulse-warn {
-    0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0); }
-    50%      { box-shadow: 0 0 0 5px rgba(245,158,11,0.15); }
-  }
-  @keyframes pill-pulse-red {
-    0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); background: rgba(239,68,68,0.2); }
-    50%      { box-shadow: 0 0 0 6px rgba(239,68,68,0.12); background: rgba(239,68,68,0.35); }
-  }
+.sc-summary{
+  width:100%;background:var(--s1);border:1px solid var(--safe-bd);
+  border-radius:14px;padding:16px 20px;margin-bottom:16px;
+}
+.sc-summary-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.sc-summary-row:last-child{border-bottom:none;padding-bottom:0}
+.sc-summary-lbl{font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.sc-summary-val{font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;color:var(--white)}
 
-  .hero-countdown {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 72px; letter-spacing: 4px; line-height: 1;
-    margin: 4px 0 6px;
-    transition: color 0.4s, text-shadow 0.4s;
-  }
-  .hero.safe     .hero-countdown { color: var(--safe); text-shadow: 0 0 40px rgba(16,185,129,0.3); }
-  .hero.warn     .hero-countdown { color: var(--warn); text-shadow: 0 0 40px rgba(245,158,11,0.3); }
-  .hero.critical .hero-countdown { color: var(--critical); text-shadow: 0 0 50px rgba(239,68,68,0.5); animation: cd-glow 0.7s infinite; }
-  .hero.done     .hero-countdown { color: var(--dim); text-shadow: none; }
+.sc-reset-card{
+  width:100%;background:var(--s2);border:1px solid var(--border);
+  border-radius:14px;padding:18px 20px;margin-bottom:16px;
+}
+.sc-reset-lbl{font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.sc-reset-time{font-family:'Bebas Neue';font-size:42px;letter-spacing:3px;color:var(--blue);line-height:1;margin-bottom:2px}
+.sc-reset-sub{font-size:9px;color:var(--muted)}
+.sc-reset-cd{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--text);margin-top:10px}
+.sc-reset-cd-lbl{font-size:8px;color:var(--muted);letter-spacing:1px}
 
-  @keyframes cd-glow {
-    0%,100% { text-shadow: 0 0 30px rgba(239,68,68,0.4); }
-    50%      { text-shadow: 0 0 70px rgba(239,68,68,0.85); }
-  }
+.sc-cpt-list{width:100%;margin-bottom:20px}
+.sc-cpt-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 14px;background:var(--s1);
+  border:1px solid var(--border);border-radius:10px;
+  margin-bottom:5px;opacity:.35;
+}
+.sc-cpt-dot{width:4px;height:4px;border-radius:50%;background:var(--safe);flex-shrink:0}
+.sc-cpt-time{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--muted);flex:1}
+.sc-cpt-done{font-size:8px;letter-spacing:1px;color:var(--safe)}
 
-  .hero-until { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+.manual-reset-btn{
+  width:100%;padding:13px;border-radius:11px;
+  background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.3);
+  color:var(--blue);font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.manual-reset-btn:active{transform:scale(.98);background:rgba(96,165,250,.15)}
 
-  /* progress bar */
-  .hero-progress-wrap {
-    margin-top: 14px;
-    height: 4px; background: rgba(255,255,255,0.06);
-    border-radius: 2px; overflow: hidden;
-  }
-  .hero-progress-bar {
-    height: 100%; border-radius: 2px;
-    transition: width 1s linear, background 0.5s;
-  }
-  .hero.safe     .hero-progress-bar { background: var(--safe); }
-  .hero.warn     .hero-progress-bar { background: var(--warn); }
-  .hero.critical .hero-progress-bar { background: var(--critical); }
-  .hero.done     .hero-progress-bar { background: var(--dim); }
-
-  /* ─── PHASE TIMELINE ─── */
-  .phases {
-    margin: 0 14px 10px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; padding: 14px 16px;
-  }
-  .phases-head {
-    font-size: 8px; letter-spacing: 3px; color: var(--dim);
-    text-transform: uppercase; margin-bottom: 12px;
-  }
-  .ph-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 8px 0; border-bottom: 1px solid rgba(28,41,64,0.6);
-    transition: opacity 0.3s;
-  }
-  .ph-row:last-child { border-bottom: none; padding-bottom: 0; }
-  .ph-row.active-phase { opacity: 1 !important; }
-  .ph-row.past-phase   { opacity: 0.35; }
-
-  .ph-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-  .ph-row.active-phase .ph-dot { animation: dot-pulse 1s infinite; }
-
-  @keyframes dot-pulse {
-    0%,100% { transform: scale(1); box-shadow: 0 0 0 0 currentColor; }
-    50%      { transform: scale(1.3); }
-  }
-
-  .ph-time {
-    font-size: 17px; font-weight: 700; min-width: 54px;
-    color: var(--white);
-  }
-  .ph-desc { flex: 1; font-size: 11px; color: var(--muted); }
-  .ph-tag {
-    font-size: 8px; font-weight: 700; letter-spacing: 1.5px;
-    padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
-  }
-
-  /* ─── NOTIFY BUTTON ─── */
-  .notify-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    margin: 0 14px 12px; padding: 13px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; color: var(--muted);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-    cursor: pointer; width: calc(100% - 28px);
-    transition: all 0.2s;
-  }
-  .notify-btn:active { transform: scale(0.97); }
-  .notify-btn.on { border-color: rgba(16,185,129,0.3); color: var(--safe); background: rgba(16,185,129,0.05); }
-
-  /* ─── CPT LIST ─── */
-  .section-head {
-    padding: 4px 18px 8px;
-    font-size: 8px; letter-spacing: 3px; color: var(--dim); text-transform: uppercase;
-  }
-  .cpt-list { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
-
-  .cpt-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 14px;
-    display: flex; align-items: center; gap: 12px;
-    transition: all 0.35s; position: relative; overflow: hidden;
-  }
-  .cpt-card.state-safe     { }
-  .cpt-card.state-warn     { border-color: rgba(245,158,11,0.4); background: #13100a; }
-  .cpt-card.state-critical { border-color: rgba(239,68,68,0.45); background: #130808; }
-  .cpt-card.state-past     { opacity: 0.32; }
-  .cpt-card.state-next     { border-color: rgba(59,130,246,0.3); }
-
-  .cpt-indicator { width: 3px; align-self: stretch; border-radius: 2px; flex-shrink: 0; min-height: 36px; }
-
-  .cpt-main { flex: 1; min-width: 0; }
-  .cpt-time {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px; letter-spacing: 2px; line-height: 1;
-    transition: color 0.3s;
-  }
-  .cpt-sub { font-size: 9px; color: var(--dim); margin-top: 2px; letter-spacing: 0.5px; }
-
-  .cpt-right { text-align: right; flex-shrink: 0; }
-  .cpt-badge {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 14px; letter-spacing: 1.5px;
-    padding: 5px 11px; border-radius: 7px;
-    display: inline-block;
-  }
-  .cpt-eta {
-    font-size: 10px; color: var(--dim);
-    margin-top: 3px; text-align: right;
-  }
-
-  /* ─── TOAST ─── */
-  .toast {
-    position: fixed; top: 14px; left: 12px; right: 12px; z-index: 9999;
-    background: #111d30; border: 1px solid rgba(245,158,11,0.45);
-    border-radius: 14px; padding: 14px 16px;
-    animation: toast-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-  }
-  .toast.critical-toast { border-color: rgba(239,68,68,0.6); }
-  .toast-title { font-size: 10px; letter-spacing: 2px; color: var(--warn); text-transform: uppercase; margin-bottom: 4px; font-weight: 700; }
-  .toast.critical-toast .toast-title { color: var(--critical); }
-  .toast-body { font-size: 13px; color: var(--text); }
-
-  @keyframes toast-in {
-    from { transform: translateY(-24px) scale(0.96); opacity: 0; }
-    to   { transform: translateY(0) scale(1); opacity: 1; }
-  }
-
-  /* ─── DIVIDER ─── */
-  .sep { margin: 10px 18px 10px; height: 1px; background: var(--border); }
-
+/* ── TOAST */
+.toast{position:fixed;top:12px;left:10px;right:10px;z-index:9999;background:#101c2e;border:1.5px solid;border-radius:14px;padding:13px 16px;box-shadow:0 12px 40px rgba(0,0,0,.7);animation:toast-in .28s cubic-bezier(.34,1.56,.64,1)}
+.toast.warn-toast{border-color:var(--warn-bd)}
+.toast.crit-toast{border-color:var(--crit-bd)}
+.toast.safe-toast{border-color:var(--safe-bd)}
+.toast-ttl{font-size:9px;letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+.warn-toast .toast-ttl{color:var(--warn)}
+.crit-toast .toast-ttl{color:var(--crit)}
+.safe-toast .toast-ttl{color:var(--safe)}
+.toast-body{font-size:12px;color:var(--text)}
+@keyframes toast-in{from{transform:translateY(-18px) scale(.95);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- Header -->
   <div class="hdr">
-    <div class="hdr-title">CPT TRACKER</div>
-    <div class="hdr-shift" id="shift-label">AMAZON FC</div>
+    <div class="logo">CPT <b>TRACKER</b></div>
+    <div class="shift-pill">AMAZON FC</div>
   </div>
 
-  <!-- Clock -->
   <div class="clock-wrap">
     <div class="clock" id="clock">00:00:00</div>
     <div class="clock-date" id="clock-date">···</div>
   </div>
 
-  <!-- Hero Next CPT -->
-  <div class="hero safe" id="hero">
-    <div class="hero-top">
-      <div>
-        <div class="hero-label">NEXT CPT</div>
-        <div class="hero-cpt-time" id="hero-cpt-time">--:--</div>
-      </div>
-      <div class="hero-status-pill" id="hero-status">LOADING</div>
+  <button class="notify-btn" id="notify-btn" onclick="askNotify()">🔔 Enable notifications</button>
+
+  <!-- ── SHIFT COMPLETE SCREEN -->
+  <div class="sc-screen" id="sc-screen">
+    <div class="sc-check">✅</div>
+    <div class="sc-title">Shift Complete</div>
+    <div class="sc-sub" id="sc-sub">All CPTs finished — great work!</div>
+
+    <div class="sc-summary" id="sc-summary"></div>
+
+    <div class="sc-reset-card">
+      <div class="sc-reset-lbl">Next shift auto-starts at</div>
+      <div class="sc-reset-time">12:00 PM</div>
+      <div class="sc-reset-sub">CPTs become active again automatically at noon</div>
+      <div class="sc-reset-cd-lbl" style="margin-top:12px">Resets in</div>
+      <div class="sc-reset-cd" id="sc-cd">--:--:--</div>
     </div>
-    <div class="hero-countdown" id="hero-cd">--:--</div>
-    <div class="hero-until" id="hero-until">until CPT</div>
-    <div class="hero-progress-wrap">
-      <div class="hero-progress-bar" id="hero-prog" style="width:0%"></div>
-    </div>
+
+    <div class="sc-cpt-list" id="sc-cpt-list"></div>
+
+    <button class="manual-reset-btn" onclick="manualReset()">↺ Reset now (new shift)</button>
   </div>
 
-  <!-- Phase Schedule -->
-  <div class="phases">
-    <div class="phases-head">⏱ Schedule for next CPT</div>
-
-    <div class="ph-row" id="ph-push">
-      <div class="ph-dot" style="background:var(--warn)" id="ph-push-dot"></div>
-      <div class="ph-time" id="ph-push-t">--:--</div>
-      <div class="ph-desc">Start pushing totes</div>
-      <div class="ph-tag" style="background:rgba(245,158,11,0.15);color:var(--warn)">PUSH</div>
+  <!-- ── NORMAL SHIFT VIEW -->
+  <div id="shift-view">
+    <div id="active-sec" style="display:none">
+      <div class="sec-hdr">⚡ Active now</div>
+      <div class="active-grid" id="active-grid"></div>
     </div>
 
-    <div class="ph-row" id="ph-out">
-      <div class="ph-dot" style="background:var(--critical)"></div>
-      <div class="ph-time" id="ph-out-t">--:--</div>
-      <div class="ph-desc">Finish pushing — take out!</div>
-      <div class="ph-tag" style="background:rgba(239,68,68,0.15);color:var(--critical)">OUT</div>
+    <div id="next-sec" style="display:none">
+      <div class="sec-hdr">→ Next CPT</div>
+      <div id="next-wrap"></div>
     </div>
 
-    <div class="ph-row" id="ph-cpt">
-      <div class="ph-dot" style="background:var(--accent)"></div>
-      <div class="ph-time" id="ph-cpt-t">--:--</div>
-      <div class="ph-desc">CPT departs</div>
-      <div class="ph-tag" style="background:rgba(59,130,246,0.15);color:var(--accent)">CPT</div>
+    <div id="upcoming-sec" style="display:none">
+      <div class="sec-hdr">Upcoming</div>
+      <div class="upcoming-list" id="upcoming-list"></div>
+    </div>
+
+    <div id="done-sec" style="display:none">
+      <div class="sec-hdr">Completed</div>
+      <div class="done-list" id="done-list"></div>
     </div>
   </div>
-
-  <!-- Notification Button -->
-  <button class="notify-btn" id="notify-btn" onclick="askNotify()">
-    🔔 Enable Notifications
-  </button>
-
-  <div class="sep"></div>
-  <div class="section-head">All CPTs — Shift Schedule</div>
-
-  <!-- CPT Cards -->
-  <div class="cpt-list" id="cpt-list"></div>
 
 </div>
 
 <script>
-// ─── CPT DATA ────────────────────────────────────────────────
-const RAW = [
-  "20:15","20:30","21:00","22:00","22:30","23:00",
-  "1:45","2:15","2:45","3:15","3:45","4:15","4:30"
-];
+const RAW=["20:15","20:30","21:00","22:00","22:30","23:00","1:45","2:15","2:45","3:15","3:45","4:15","4:30"];
 
-// Convert "H:MM" → minutes since midnight
-function toMin(str) {
-  const [h, m] = str.split(':').map(Number);
-  return h * 60 + m;
+function toMin(s){const[h,m]=s.split(':').map(Number);return h*60+m}
+function fmtT(m){const h=Math.floor(m/60)%24,n=m%60;return`${String(h).padStart(2,'0')}:${String(n).padStart(2,'0')}`}
+function fmtCd(sec){
+  if(sec<0)sec=0;
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  if(h>0)return`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function fmtEta(diffMin){
+  if(diffMin<60)return`${diffMin}m`;
+  const h=Math.floor(diffMin/60),m=diffMin%60;
+  return m?`${h}h ${m}m`:`${h}h`;
 }
 
-// Format minutes → "HH:MM" (handles values > 1440)
-function fmtTime(min) {
-  const h = Math.floor(min / 60) % 24;
-  const m = min % 60;
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+const CPTS=RAW.map(r=>{
+  const min=toMin(r),nd=min<720,eff=nd?min+1440:min;
+  return{label:fmtT(min),min,eff,pushStart:eff-70,takeOut:eff-60};
+}).sort((a,b)=>a.eff-b.eff);
+
+const manualDone=new Set();
+const notified=new Set();
+let notifyOn=false;
+let shiftCompleteShown=false; // track if we already fired the shift-done toast
+
+function nowEff(){
+  const d=new Date(),h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();
+  const min=h*60+m,eff=min<720?min+1440:min;
+  return{eff,h,m,s,min};
 }
 
-// Format countdown (total seconds) → "H:MM:SS" or "MM:SS"
-function fmtCd(totalSec) {
-  if (totalSec < 0) totalSec = 0;
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+function getPhase(cpt,effNow){
+  if(manualDone.has(cpt.eff))return'done';
+  const diff=cpt.eff-effNow;
+  if(diff<=0)return'past';
+  if(diff<=60)return'critical';
+  if(diff<=70)return'warn';
+  return'safe';
 }
 
-// Build CPT objects
-// Times < noon (720 min) = after midnight (next calendar day) → add 1440 for ordering
-const CPTS = RAW.map(raw => {
-  const min = toMin(raw);
-  const isNextDay = min < 720;
-  const eff = isNextDay ? min + 1440 : min; // "effective" minutes for sorting/comparing
-  return {
-    label: fmtTime(min),
-    min,
-    isNextDay,
-    eff,
-    pushStart: eff - 70,  // start pushing 70 min before CPT
-    pushEnd:   eff - 60,  // finish & take out 60 min before CPT
-  };
-}).sort((a, b) => a.eff - b.eff);
-
-// ─── STATE ───────────────────────────────────────────────────
-let notifyOn = false;
-const notified = new Set();
-
-// ─── HELPERS ─────────────────────────────────────────────────
-function nowEff() {
-  const d = new Date();
-  const h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-  const minNow = h * 60 + m;
-  // If before noon treat as "next day" in our effective scale
-  const eff = minNow < 720 ? minNow + 1440 : minNow;
-  return { eff, sec: s, minNow, h, m, s };
+function markDone(eff){
+  manualDone.add(eff);
+  if('vibrate'in navigator)navigator.vibrate([80,40,80]);
+  render();
 }
 
-function getPhase(cpt, effNow) {
-  const diff = cpt.eff - effNow;
-  if (diff < 0)   return 'past';
-  if (diff <= 60) return 'critical';   // take out window
-  if (diff <= 70) return 'warn';       // start pushing
-  return 'safe';
+function manualReset(){
+  manualDone.clear();
+  notified.clear();
+  shiftCompleteShown=false;
+  render();
 }
 
-// ─── NOTIFICATIONS ───────────────────────────────────────────
-function askNotify() {
-  if (!('Notification' in window)) { alert('Notifications not supported on this browser.'); return; }
-  Notification.requestPermission().then(p => {
-    notifyOn = p === 'granted';
-    renderNotifyBtn();
-  });
+/* ── NOTIFICATIONS */
+function askNotify(){
+  if(!('Notification'in window)){alert('Notifications not supported in this browser.');return;}
+  Notification.requestPermission().then(p=>{notifyOn=p==='granted';renderNotifyBtn();});
+}
+function renderNotifyBtn(){
+  const b=document.getElementById('notify-btn');
+  if(notifyOn){b.textContent='✅ Notifications on';b.classList.add('on');}
+  else{b.textContent='🔔 Enable notifications';b.classList.remove('on');}
+}
+function fire(title,body,type){
+  showToast(title,body,type);
+  if(notifyOn){try{new Notification(title,{body,silent:false});}catch(e){}}
+  if('vibrate'in navigator)navigator.vibrate(type==='crit'?[500,100,500,100,900]:[300,100,300]);
+}
+let toastTmr;
+function showToast(t,b,type){
+  const old=document.getElementById('_t');if(old)old.remove();clearTimeout(toastTmr);
+  const el=document.createElement('div');el.id='_t';
+  el.className=`toast ${type==='crit'?'crit-toast':type==='safe'?'safe-toast':'warn-toast'}`;
+  el.innerHTML=`<div class="toast-ttl">${t}</div><div class="toast-body">${b}</div>`;
+  document.body.appendChild(el);
+  toastTmr=setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400);},6500);
 }
 
-function renderNotifyBtn() {
-  const btn = document.getElementById('notify-btn');
-  if (notifyOn) {
-    btn.textContent = '✅ Notifications Enabled';
-    btn.classList.add('on');
-  } else {
-    btn.textContent = '🔔 Enable Notifications';
-    btn.classList.remove('on');
-  }
-}
+/* ── RENDER */
+function render(){
+  const{eff:effNow,h,m,s,min}=nowEff();
 
-function fire(title, body, isCritical) {
-  showToast(title, body, isCritical);
-  if (notifyOn) {
-    try { new Notification(title, { body, silent: false }); } catch(e) {}
-  }
-  // Vibrate on mobile
-  if ('vibrate' in navigator) {
-    navigator.vibrate(isCritical ? [400,100,400,100,800] : [300,100,300]);
-  }
-}
-
-let toastTimer;
-function showToast(title, body, isCritical) {
-  const old = document.getElementById('toast');
-  if (old) old.remove();
-  clearTimeout(toastTimer);
-  const t = document.createElement('div');
-  t.id = 'toast';
-  t.className = 'toast' + (isCritical ? ' critical-toast' : '');
-  t.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
-  document.body.appendChild(t);
-  toastTimer = setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.5s'; setTimeout(()=>t.remove(),500); }, 6000);
-}
-
-// ─── BUILD CARD SKELETONS ─────────────────────────────────────
-function buildList() {
-  const list = document.getElementById('cpt-list');
-  CPTS.forEach(cpt => {
-    const card = document.createElement('div');
-    card.className = 'cpt-card';
-    card.id = `card-${cpt.eff}`;
-    list.appendChild(card);
-  });
-}
-
-// ─── MAIN TICK ───────────────────────────────────────────────
-function tick() {
-  const { eff: effNow, sec, h, m, s } = nowEff();
-
-  // ── Clock
-  const now = new Date();
-  document.getElementById('clock').textContent =
+  /* clock */
+  document.getElementById('clock').textContent=
     `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-  document.getElementById('clock-date').textContent =
-    `${DAYS[now.getDay()]} ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  const d=new Date();
+  const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('clock-date').textContent=`${DAYS[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`;
 
-  // ── Find next CPT
-  let nextCpt = null, minDiff = Infinity;
-  for (const cpt of CPTS) {
-    const diff = cpt.eff - effNow;
-    if (diff > 0 && diff < minDiff) { minDiff = diff; nextCpt = cpt; }
-  }
-  // All past → show first CPT (next shift)
-  if (!nextCpt) { nextCpt = CPTS[0]; minDiff = nextCpt.eff + 1440 - effNow; }
+  /* categorise */
+  const active  =CPTS.filter(c=>{const p=getPhase(c,effNow);return p==='warn'||p==='critical';});
+  const upcoming=CPTS.filter(c=>getPhase(c,effNow)==='safe');
+  const done    =CPTS.filter(c=>{const p=getPhase(c,effNow);return p==='past'||p==='done';});
 
-  // ── Hero
-  const phase = getPhase(nextCpt, effNow);
-  const hero = document.getElementById('hero');
-  hero.className = `hero ${phase === 'past' ? 'done' : phase}`;
+  /* ── ALL DONE CHECK */
+  const allDone=CPTS.every(c=>{const p=getPhase(c,effNow);return p==='past'||p==='done';});
 
-  document.getElementById('hero-cpt-time').textContent = `CPT ${nextCpt.label}`;
+  if(allDone){
+    document.getElementById('shift-view').style.display='none';
+    const sc=document.getElementById('sc-screen');
+    sc.classList.add('visible');
 
-  const totalSec = minDiff * 60 - sec;
-  document.getElementById('hero-cd').textContent = fmtCd(totalSec);
-
-  const statusTxt = {
-    safe:     '✅ You\'re good',
-    warn:     '⚠️ PUSH NOW!',
-    critical: '🚨 TAKE IT OUT!',
-    past:     '✓ Done',
-  };
-  document.getElementById('hero-status').textContent = statusTxt[phase] || '';
-
-  const untilTxt = {
-    safe:     `push by ${fmtTime(nextCpt.pushStart % 1440)}`,
-    warn:     `hard out by ${fmtTime(nextCpt.pushEnd % 1440)}`,
-    critical: `CPT at ${nextCpt.label} — GET IT OUT`,
-    past:     `CPT ${nextCpt.label}`,
-  };
-  document.getElementById('hero-until').textContent = untilTxt[phase] || 'until CPT';
-
-  // Progress bar: fraction of time elapsed from last phase boundary to next
-  let progPct = 0;
-  if (phase === 'safe') {
-    // progress from "previous CPT or far back" — show % of window until push starts
-    const windowMin = 120; // show last 2 hrs as the "safe" window
-    const elapsed = windowMin - Math.max(0, minDiff - 70);
-    progPct = Math.min(100, Math.max(0, (elapsed / windowMin) * 100));
-  } else if (phase === 'warn') {
-    progPct = ((70 - minDiff) / 10) * 100; // 10-min window
-  } else if (phase === 'critical') {
-    progPct = ((60 - minDiff) / 60) * 100;
-  } else {
-    progPct = 100;
-  }
-  document.getElementById('hero-prog').style.width = progPct.toFixed(1) + '%';
-
-  // ── Phase rows
-  document.getElementById('ph-push-t').textContent = fmtTime(nextCpt.pushStart % 1440);
-  document.getElementById('ph-out-t').textContent  = fmtTime(nextCpt.pushEnd   % 1440);
-  document.getElementById('ph-cpt-t').textContent  = nextCpt.label;
-
-  const phPush = document.getElementById('ph-push');
-  const phOut  = document.getElementById('ph-out');
-  const phCpt  = document.getElementById('ph-cpt');
-  phPush.className = 'ph-row ' + (phase === 'warn'     ? 'active-phase' : (phase === 'safe' ? '' : 'past-phase'));
-  phOut.className  = 'ph-row ' + (phase === 'critical'  ? 'active-phase' : (['warn','safe'].includes(phase) ? '' : 'past-phase'));
-  phCpt.className  = 'ph-row';
-
-  // ── Notifications
-  const k70 = `w-${nextCpt.eff}`, k60 = `c-${nextCpt.eff}`, k10 = `t-${nextCpt.eff}`;
-  if (minDiff <= 70 && minDiff > 60 && !notified.has(k70)) {
-    notified.add(k70);
-    fire('⚠️ START PUSHING', `CPT ${nextCpt.label} — finish by ${fmtTime(nextCpt.pushEnd % 1440)}`, false);
-  }
-  if (minDiff <= 60 && minDiff > 0 && !notified.has(k60)) {
-    notified.add(k60);
-    fire('🚨 TAKE IT OUT NOW!', `All totes out before CPT ${nextCpt.label}`, true);
-  }
-  if (minDiff <= 10 && minDiff > 0 && !notified.has(k10)) {
-    notified.add(k10);
-    fire('⏰ CPT IN 10 MIN', `CPT ${nextCpt.label} departing soon!`, false);
-  }
-
-  // ── CPT Cards
-  CPTS.forEach(cpt => {
-    const card = document.getElementById(`card-${cpt.eff}`);
-    if (!card) return;
-    const p = getPhase(cpt, effNow);
-    const isNext = cpt === nextCpt;
-    const diff = cpt.eff - effNow;
-
-    // State class
-    let stateClass = 'state-safe';
-    if (p === 'past')     stateClass = 'state-past';
-    else if (p === 'warn')     stateClass = 'state-warn';
-    else if (p === 'critical') stateClass = 'state-critical';
-    else if (isNext)      stateClass = 'state-next';
-    card.className = `cpt-card ${stateClass}`;
-
-    const color = {safe:'var(--safe)', warn:'var(--warn)', critical:'var(--critical)', past:'var(--dim)'}[p];
-
-    // Badge
-    let badge = '';
-    if (p === 'past') {
-      badge = `<div class="cpt-badge" style="background:rgba(78,96,128,0.1);color:var(--dim)">DONE</div>`;
-    } else if (p === 'critical') {
-      badge = `<div class="cpt-badge" style="background:rgba(239,68,68,0.2);color:var(--critical);animation:pill-pulse-red 0.7s infinite">TAKE OUT</div>`;
-    } else if (p === 'warn') {
-      badge = `<div class="cpt-badge" style="background:rgba(245,158,11,0.2);color:var(--warn)">PUSH NOW</div>`;
-    } else if (isNext) {
-      badge = `<div class="cpt-badge" style="background:rgba(59,130,246,0.15);color:var(--accent)">NEXT</div>`;
-    } else {
-      const dh = Math.floor(diff/60), dm = diff % 60;
-      badge = `<div class="cpt-badge" style="background:rgba(16,185,129,0.08);color:var(--safe);font-size:12px">${dh}h ${String(dm).padStart(2,'0')}m</div>`;
+    /* fire shift-complete toast once */
+    if(!shiftCompleteShown){
+      shiftCompleteShown=true;
+      fire('✅ Shift Complete','All CPTs done — well done!','safe');
+      if('vibrate'in navigator)navigator.vibrate([200,100,200,100,500]);
     }
 
-    const eta = p !== 'past'
-      ? `<div class="cpt-eta">push ${fmtTime(cpt.pushStart % 1440)} · out ${fmtTime(cpt.pushEnd % 1440)}</div>`
-      : '';
-
-    card.innerHTML = `
-      <div class="cpt-indicator" style="background:${color}"></div>
-      <div class="cpt-main">
-        <div class="cpt-time" style="color:${color}">${cpt.label}</div>
-        <div class="cpt-sub">push by ${fmtTime(cpt.pushEnd % 1440)}</div>
+    /* summary */
+    const manual=CPTS.filter(c=>manualDone.has(c.eff)).length;
+    const natural=done.length-manual;
+    document.getElementById('sc-summary').innerHTML=`
+      <div class="sc-summary-row">
+        <span class="sc-summary-lbl">Total CPTs</span>
+        <span class="sc-summary-val">${CPTS.length}</span>
       </div>
-      <div class="cpt-right">
-        ${badge}
-        ${eta}
+      <div class="sc-summary-row">
+        <span class="sc-summary-lbl">Completed naturally</span>
+        <span class="sc-summary-val">${natural}</span>
+      </div>
+      <div class="sc-summary-row">
+        <span class="sc-summary-lbl">Marked done early</span>
+        <span class="sc-summary-val">${manual}</span>
       </div>
     `;
+
+    /* countdown to noon reset */
+    let secsToNoon;
+    if(min<720){
+      /* still before noon — count down */
+      secsToNoon=(720-min)*60-s;
+    } else {
+      /* already past noon — next reset is next day */
+      secsToNoon=(720+1440-min)*60-s;
+    }
+    document.getElementById('sc-cd').textContent=fmtCd(secsToNoon);
+
+    /* completed CPT list */
+    const listEl=document.getElementById('sc-cpt-list');
+    listEl.innerHTML='';
+    CPTS.forEach(cpt=>{
+      const isM=manualDone.has(cpt.eff);
+      const row=document.createElement('div');
+      row.className='sc-cpt-row';
+      row.innerHTML=`
+        <div class="sc-cpt-dot"></div>
+        <div class="sc-cpt-time">${cpt.label}</div>
+        <div class="sc-cpt-done">${isM?'Marked done':'✓'}</div>`;
+      listEl.appendChild(row);
+    });
+    return;
+  }
+
+  /* normal view */
+  document.getElementById('sc-screen').classList.remove('visible');
+  document.getElementById('shift-view').style.display='block';
+  shiftCompleteShown=false;
+
+  /* notifications */
+  CPTS.forEach(cpt=>{
+    if(manualDone.has(cpt.eff))return;
+    const diff=cpt.eff-effNow;
+    const kw=`w${cpt.eff}`,kc=`c${cpt.eff}`,kt=`t${cpt.eff}`;
+    if(diff<=70&&diff>60&&!notified.has(kw)){notified.add(kw);fire('⚠️ Start pushing',`CPT ${cpt.label} — take out by ${fmtT(cpt.takeOut%1440)}`,'warn');}
+    if(diff<=60&&diff>0&&!notified.has(kc)){notified.add(kc);fire('🚨 Take out NOW',`All totes out before CPT ${cpt.label}`,'crit');}
+    if(diff<=10&&diff>0&&!notified.has(kt)){notified.add(kt);fire('⏰ CPT in 10 min',`CPT ${cpt.label} departing soon`,'warn');}
   });
+
+  /* ── ACTIVE SECTION */
+  const activeSec=document.getElementById('active-sec');
+  const activeGrid=document.getElementById('active-grid');
+  if(active.length>0){
+    activeSec.style.display='block';
+    activeGrid.innerHTML='';
+    const isDual=active.length>=2;
+    if(isDual){
+      const row=document.createElement('div');row.className='dual-row';
+      active.slice(0,2).forEach(cpt=>row.appendChild(buildActiveCard(cpt,effNow,s,'dual-card')));
+      activeGrid.appendChild(row);
+      active.slice(2).forEach(cpt=>activeGrid.appendChild(buildActiveCard(cpt,effNow,s,'single-card')));
+    } else {
+      active.forEach(cpt=>activeGrid.appendChild(buildActiveCard(cpt,effNow,s,'single-card')));
+    }
+  } else { activeSec.style.display='none'; }
+
+  /* ── NEXT SECTION */
+  const nextSec=document.getElementById('next-sec');
+  const nextWrap=document.getElementById('next-wrap');
+  if(active.length===0&&upcoming.length>0){
+    const nxt=upcoming[0];
+    const diff=nxt.eff-effNow;
+    const cdSec=diff*60-s;
+    nextSec.style.display='block';
+    nextWrap.innerHTML=`
+      <div class="next-card">
+        <div class="nc-left">
+          <div class="nc-lbl">Next CPT</div>
+          <div class="nc-time">${nxt.label}</div>
+          <div class="nc-push">push from ${fmtT(nxt.pushStart%1440)} · out by ${fmtT(nxt.takeOut%1440)}</div>
+        </div>
+        <div class="nc-right">
+          <div class="nc-cd">${fmtCd(cdSec)}</div>
+          <div class="nc-cd-sub">until CPT</div>
+        </div>
+      </div>`;
+  } else { nextSec.style.display='none'; }
+
+  /* ── UPCOMING */
+  const upcomingSec=document.getElementById('upcoming-sec');
+  const upcomingList=document.getElementById('upcoming-list');
+  const qItems=active.length>0?upcoming:upcoming.slice(1);
+  if(qItems.length>0){
+    upcomingSec.style.display='block';
+    upcomingList.innerHTML='';
+    qItems.forEach((cpt,i)=>{
+      const diff=cpt.eff-effNow;
+      const isNextUp=i===0&&active.length>0;
+      const isFirst=i===0;
+      const div=document.createElement('div');
+
+      if(isFirst){
+        /* ── Featured first card */
+        div.className=`up-card up-featured${isNextUp?' up-next':''}`;
+        div.innerHTML=`
+          <div class="uf-top">
+            <div class="up-ind" style="background:${isNextUp?'var(--blue)':'var(--safe)'}"></div>
+            <div class="up-main">
+              <div style="font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:2px">CPT</div>
+              <div class="up-time">${cpt.label}</div>
+            </div>
+            <div class="up-right">
+              <div class="up-eta">${fmtEta(diff)}</div>
+              <div class="up-eta-sub">until CPT</div>
+            </div>
+          </div>
+          <div class="uf-push-row">
+            <div class="uf-push-icon">📦</div>
+            <div class="uf-push-text">
+              <div class="uf-push-label">Start pushing at</div>
+              <div class="uf-push-times">${fmtT(cpt.pushStart%1440)}</div>
+              <div class="uf-out-label">Take out by</div>
+              <div class="uf-out-time">${fmtT(cpt.takeOut%1440)}</div>
+            </div>
+          </div>`;
+      } else {
+        /* ── Regular card */
+        div.className=`up-card${isNextUp?' up-next':''}`;
+        div.innerHTML=`
+          <div class="up-ind" style="background:${isNextUp?'var(--blue)':'var(--safe)'}"></div>
+          <div class="up-main">
+            <div class="up-time">${cpt.label}</div>
+            <div class="up-sub">push ${fmtT(cpt.pushStart%1440)} · out ${fmtT(cpt.takeOut%1440)}</div>
+          </div>
+          <div class="up-right">
+            <div class="up-eta">${fmtEta(diff)}</div>
+            <div class="up-eta-sub">until CPT</div>
+          </div>`;
+      }
+      upcomingList.appendChild(div);
+    });
+  } else { upcomingSec.style.display='none'; }
+
+  /* ── DONE */
+  const doneSec=document.getElementById('done-sec');
+  const doneList=document.getElementById('done-list');
+  if(done.length>0){
+    doneSec.style.display='block';
+    doneList.innerHTML='';
+    done.forEach(cpt=>{
+      const isM=manualDone.has(cpt.eff);
+      const div=document.createElement('div');
+      div.className='done-row';
+      div.innerHTML=`
+        <div class="done-ind"></div>
+        <div class="done-time">${cpt.label}</div>
+        <div class="done-badge">${isM?'Done ✓':'Past'}</div>`;
+      doneList.appendChild(div);
+    });
+  } else { doneSec.style.display='none'; }
 }
 
-// ─── INIT ────────────────────────────────────────────────────
-buildList();
-tick();
-setInterval(tick, 1000);
-
-// Auto-enable if permission already granted
-if ('Notification' in window && Notification.permission === 'granted') {
-  notifyOn = true;
-  renderNotifyBtn();
+function buildActiveCard(cpt,effNow,secNow,sizeClass){
+  const phase=getPhase(cpt,effNow);
+  const isCrit=phase==='critical';
+  const diff=cpt.eff-effNow;
+  let cdSec,cdSub;
+  if(isCrit){cdSec=Math.max(0,diff*60-secNow);cdSub='until CPT departs';}
+  else{cdSec=Math.max(0,(cpt.takeOut-effNow)*60-secNow);cdSub='until take-out time';}
+  let prog=0;
+  if(isCrit) prog=Math.min(100,((60-diff)/60)*100);
+  else prog=Math.min(100,((10-(diff-60))/10)*100);
+  const card=document.createElement('div');
+  card.className=`act-card ${isCrit?'crit-card':'warn-card'} ${sizeClass}`;
+  card.innerHTML=`
+    <div class="phase-tag">${isCrit?'🚨 Take out':'⚠️ Push now'}</div>
+    <div class="act-lbl">CPT</div>
+    <div class="act-cpt-t">${cpt.label}</div>
+    <div class="big-cd">${fmtCd(cdSec)}</div>
+    <div class="cd-sub">${cdSub}</div>
+    <div class="prog-wrap"><div class="prog-bar" style="width:${prog.toFixed(1)}%"></div></div>
+    <div class="mini-phases">
+      <div class="mini-ph"><div class="mini-dot" style="background:var(--warn)"></div><div class="mini-t">${fmtT(cpt.pushStart%1440)}</div><div class="mini-desc">start pushing</div></div>
+      <div class="mini-ph"><div class="mini-dot" style="background:var(--crit)"></div><div class="mini-t">${fmtT(cpt.takeOut%1440)}</div><div class="mini-desc">take it out</div></div>
+      <div class="mini-ph"><div class="mini-dot" style="background:var(--blue)"></div><div class="mini-t">${cpt.label}</div><div class="mini-desc">CPT departs</div></div>
+    </div>
+    ${isCrit?`<button class="done-btn" onclick="markDone(${cpt.eff})">✓ Mark CPT done</button>`:''}`;
+  return card;
 }
+
+render();
+setInterval(render,1000);
+if('Notification'in window&&Notification.permission==='granted'){notifyOn=true;renderNotifyBtn();}
 </script>
 </body>
 </html>
