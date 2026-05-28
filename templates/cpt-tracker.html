@@ -292,10 +292,30 @@ const CPTS=RAW.map(r=>{
   return{label:fmtT(min),min,eff,pushStart:eff-70,takeOut:eff-60};
 }).sort((a,b)=>a.eff-b.eff);
 
-const manualDone=new Set();
+/* ── LOCALSTORAGE PERSISTENCE ── */
+const LS_KEY='cpt_done_v1';
+function loadDone(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw)return new Set();
+    const{date,list}=JSON.parse(raw);
+    // Only restore if saved today (date = YYYY-MM-DD)
+    const today=new Date().toISOString().slice(0,10);
+    if(date===today)return new Set(list);
+  }catch(e){}
+  return new Set();
+}
+function saveDone(){
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    localStorage.setItem(LS_KEY,JSON.stringify({date:today,list:[...manualDone]}));
+  }catch(e){}
+}
+
+const manualDone=loadDone();
 const notified=new Set();
 let notifyOn=false;
-let shiftCompleteShown=false; // track if we already fired the shift-done toast
+let shiftCompleteShown=false;
 
 function nowEff(){
   const d=new Date(),h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();
@@ -314,12 +334,14 @@ function getPhase(cpt,effNow){
 
 function markDone(eff){
   manualDone.add(eff);
+  saveDone();
   if('vibrate'in navigator)navigator.vibrate([80,40,80]);
   render();
 }
 
 function manualReset(){
   manualDone.clear();
+  saveDone();
   notified.clear();
   shiftCompleteShown=false;
   render();
@@ -468,15 +490,26 @@ function render(){
     const cdSec=diff*60-s;
     nextSec.style.display='block';
     nextWrap.innerHTML=`
-      <div class="next-card">
-        <div class="nc-left">
-          <div class="nc-lbl">Next CPT</div>
-          <div class="nc-time">${nxt.label}</div>
-          <div class="nc-push">push from ${fmtT(nxt.pushStart%1440)} · out by ${fmtT(nxt.takeOut%1440)}</div>
+      <div class="up-card up-featured" style="margin:0 12px">
+        <div class="uf-top">
+          <div class="up-ind" style="background:var(--safe)"></div>
+          <div class="up-main">
+            <div style="font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:2px">CPT</div>
+            <div class="up-time">${nxt.label}</div>
+          </div>
+          <div class="up-right">
+            <div class="up-eta">${fmtCd(cdSec)}</div>
+            <div class="up-eta-sub">until CPT</div>
+          </div>
         </div>
-        <div class="nc-right">
-          <div class="nc-cd">${fmtCd(cdSec)}</div>
-          <div class="nc-cd-sub">until CPT</div>
+        <div class="uf-push-row">
+          <div class="uf-push-icon">📦</div>
+          <div class="uf-push-text">
+            <div class="uf-push-label">Start pushing at</div>
+            <div class="uf-push-times">${fmtT(nxt.pushStart%1440)}</div>
+            <div class="uf-out-label">Take out by</div>
+            <div class="uf-out-time">${fmtT(nxt.takeOut%1440)}</div>
+          </div>
         </div>
       </div>`;
   } else { nextSec.style.display='none'; }
@@ -484,22 +517,27 @@ function render(){
   /* ── UPCOMING */
   const upcomingSec=document.getElementById('upcoming-sec');
   const upcomingList=document.getElementById('upcoming-list');
+  // When no active CPTs: next-sec shows upcoming[0], so list shows slice(1)
+  // When active CPTs exist: next-sec is hidden, so list shows all upcoming
   const qItems=active.length>0?upcoming:upcoming.slice(1);
   if(qItems.length>0){
     upcomingSec.style.display='block';
     upcomingList.innerHTML='';
     qItems.forEach((cpt,i)=>{
       const diff=cpt.eff-effNow;
-      const isNextUp=i===0&&active.length>0;
-      const isFirst=i===0;
+      const isNextUp=false;
+      // Featured = first card in the list, but only when next-sec is NOT showing
+      // next-sec is hidden when active.length>0 OR when upcoming.length===0
+      // Since we're here, upcoming has items. So: featured when active.length>0 AND i===0
+      const isFeatured=i===0&&active.length>0;
       const div=document.createElement('div');
 
-      if(isFirst){
+      if(isFeatured){
         /* ── Featured first card */
-        div.className=`up-card up-featured${isNextUp?' up-next':''}`;
+        div.className='up-card up-featured';
         div.innerHTML=`
           <div class="uf-top">
-            <div class="up-ind" style="background:${isNextUp?'var(--blue)':'var(--safe)'}"></div>
+            <div class="up-ind" style="background:var(--safe)"></div>
             <div class="up-main">
               <div style="font-size:8px;letter-spacing:2px;color:var(--muted);margin-bottom:2px">CPT</div>
               <div class="up-time">${cpt.label}</div>
@@ -586,6 +624,16 @@ function buildActiveCard(cpt,effNow,secNow,sizeClass){
 render();
 setInterval(render,1000);
 if('Notification'in window&&Notification.permission==='granted'){notifyOn=true;renderNotifyBtn();}
+
+/* ── AUTO REFRESH ── */
+// If tab was hidden and comes back after >5 min, reload (server may have slept)
+let hiddenAt=null;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ hiddenAt=Date.now(); }
+  else { if(hiddenAt&&(Date.now()-hiddenAt)>5*60*1000) location.reload(); hiddenAt=null; }
+});
+// Hard reload every 30 min as a keepalive fallback
+setTimeout(()=>location.reload(),30*60*1000);
 </script>
 </body>
 </html>
